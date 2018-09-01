@@ -24,3 +24,7 @@ An MOA-based implementation for data stream classification in Python/Cython
   - Improve Cython implementation
   - Add more algorithms
   - Provide a better usage manual
+
+## REBUILD cython if running on something else than linux-64bits
+  - pip install cython --user
+  - python compile_cython.py

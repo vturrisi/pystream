@@ -1,15 +1,14 @@
 import pandas as pd
 import sys
 import os
-sys.path.append('..')
 
-from src import (VFDT, SVFDT, SVFDT_II,
-                 OzaBagging, OzaBoosting,
-                 LeveragingBagging,
-                 OnlineAccuracyUpdatedEnsemble,
-                 AdaptiveRandomForests,
-                 read_arff_meta,
-                 instance_gen, EvaluatePrequential)
+from pystream import (VFDT, SVFDT, SVFDT_II,
+                      OzaBagging, OzaBoosting,
+                      LeveragingBagging,
+                      OnlineAccuracyUpdatedEnsemble,
+                      AdaptiveRandomForests,
+                      read_arff_meta,
+                      instance_gen, EvaluatePrequential)
 
 def run():
     DEBUG = True

@@ -1,0 +1,6 @@
+__pycache__/
+/build
+/evaluate
+
+# Egg metadata
+*.egg-info

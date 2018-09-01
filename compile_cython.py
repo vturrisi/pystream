@@ -7,8 +7,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
 
-def scandir(dir):
-    files = []
+def scandir(dir, files=[]):
     for file in os.listdir(dir):
         path = os.path.join(dir, file)
         if os.path.isfile(path) and path.endswith(".pyx"):
@@ -30,9 +29,9 @@ def makeExtension(extName):
                      )
 
 
-# extNames = scandir('pystream')
+extNames = scandir('pystream')
 
-extNames = scandir('algorithms') + scandir('evaluation') + scandir('utils')
+# extNames = scandir('algorithms') + scandir('evaluation') + scandir('utils')
 
 extensions = [makeExtension(name) for name in extNames]
 
@@ -41,7 +40,7 @@ setup(
     ext_modules=extensions,
     cmdclass={'build_ext': build_ext},
     script_args=['build_ext'],
-    options={'build_ext': {'inplace': True, 'force': False}}
+    options={'build_ext': {'inplace': True, 'force': True}}
 )
 
 print('********CYTHON COMPLETE******')

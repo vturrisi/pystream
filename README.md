@@ -6,7 +6,7 @@ An MOA-based implementation for data stream classification in Python/Cython
 
   __Base learners__:
   - Very Fast Decision Tree (https://homes.cs.washington.edu/~pedrod/papers/kdd00.pdf)
-  - Strict Very Fast Decision Tree (https://arxiv.org/abs/1805.06368)
+  - Strict Very Fast Decision Tree (https://www.sciencedirect.com/science/article/pii/S0167865518305580)
 
   __Ensembles__:
   - OzaBag/OzaBoost (https://ti.arc.nasa.gov/m/profile/oza/files/ozru01a.pdf)

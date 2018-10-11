@@ -1,5 +1,5 @@
-from .vfdt cimport VFDT, Node
-from .statistics.value_stats cimport NormalDistValueStats
+from vfdt cimport VFDT, Node
+from statistics.value_stats cimport NormalDistValueStats
 
 
 cdef class SVFDT(VFDT):

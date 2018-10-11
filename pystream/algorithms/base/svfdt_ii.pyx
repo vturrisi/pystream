@@ -1,7 +1,7 @@
 # cython: boundscheck=False, wraparound=False
 
-from .vfdt cimport Node
-from .svfdt cimport SVFDT
+from vfdt cimport Node
+from svfdt cimport SVFDT
 
 
 cdef class SVFDT_II(SVFDT):

@@ -11,9 +11,11 @@ from sys import getsizeof
 from random import sample
 from typing import Iterable, Optional
 from collections import namedtuple
-from .numeric_estimators import ClassGaussianEstimator
-from .nominal_counters import NominalCounter
-from .statistics.tree_stats cimport TreeStats
+from numeric_estimators import ClassGaussianEstimator
+from nominal_counters import NominalCounter
+from statistics.tree_stats import TreeStats
+from statistics.tree_stats cimport TreeStats
+
 
 # type definitions
 Distribution = Iterable[float]

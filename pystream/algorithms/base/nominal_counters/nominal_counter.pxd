@@ -16,9 +16,9 @@ cdef class NominalCounter:
 
     cdef double _memory_size(self)
 
-    cdef _add_instance(self, value_type value, int y, int weight)
+    cdef _add_instance(self, object value, int y, int weight)
 
-    cdef int _get_count(self, value_type value)
+    cdef int _get_count(self, object value)
 
     cdef tuple _get_values(self)
 
@@ -30,7 +30,7 @@ cdef class NominalCounter:
 
     cdef void _merge(self, NominalCounter other)
 
-    cdef double _get_proba(self, value_type value, int y)
+    cdef double _get_proba(self, object value, int y)
 
     cdef dict _get_probas(self)
 

@@ -4,19 +4,13 @@ import numpy
 from numpy.distutils.misc_util import Configuration
 from Cython.Distutils import build_ext
 
-
 def configuration(parent_package="", top_path=None):
-    config = Configuration("statistics", parent_package, top_path)
+    config = Configuration("change_detectors", parent_package, top_path)
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
-    config.add_extension("tree_stats",
-                         sources=["tree_stats.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries,
-                         extra_compile_args=["-O3"])
-    config.add_extension("value_stats",
-                         sources=["value_stats.pyx"],
+    config.add_extension("adwin",
+                         sources=["adwin.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])

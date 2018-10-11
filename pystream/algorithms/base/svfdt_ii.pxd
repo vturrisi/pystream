@@ -1,4 +1,4 @@
-from .svfdt cimport SVFDT
+from svfdt cimport SVFDT
 
 
 cdef class SVFDT_II(SVFDT):

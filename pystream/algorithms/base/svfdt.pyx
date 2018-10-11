@@ -1,13 +1,13 @@
 # cython: boundscheck=False, wraparound=False
 
 cimport numpy as np
-from .vfdt cimport VFDT, Node
+from vfdt cimport VFDT, Node
 
 import numpy as np
 from sys import getsizeof
-from .numeric_estimators.gaussian_estimator import ClassGaussianEstimator
-from .statistics.value_stats import NormalDistValueStats
-from .vfdt import VFDT, Optional, Node, Iterable
+from numeric_estimators.gaussian_estimator import ClassGaussianEstimator
+from statistics.value_stats import NormalDistValueStats
+from vfdt import VFDT, Optional, Node, Iterable
 
 
 

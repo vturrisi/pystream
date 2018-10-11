@@ -6,7 +6,6 @@ from libc.math cimport INFINITY
 
 from sys import getsizeof
 from ..change_detectors.adwin import ADWIN
-from ..change_detectors.adwin cimport ADWIN
 
 
 cdef class AdaptiveRandomForests:

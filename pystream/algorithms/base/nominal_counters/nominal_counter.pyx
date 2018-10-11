@@ -43,7 +43,7 @@ cdef class NominalCounter:
         size += sum([getsizeof(t) for t in self._totals.values()])
         return size
 
-    cdef _add_instance(self, value_type value, int y, int weight):
+    cdef _add_instance(self, object value, int y, int weight):
         """
         Increments the number of occurences of a value with some weight
         given a class label y
@@ -58,7 +58,7 @@ cdef class NominalCounter:
         self._totals[value] += weight
         self._counts[value][y] += weight
 
-    cdef int _get_count(self, value_type value):
+    cdef int _get_count(self, object value):
         """
         Returns the number of occurences of a given value for
         all possible class labels
@@ -107,7 +107,7 @@ cdef class NominalCounter:
         for v in self._counts:
             self._counts[v] += other._counts[v]
 
-    cdef double _get_proba(self, value_type value, int y):
+    cdef double _get_proba(self, object value, int y):
         """
         Get the probability of a value belonging to a specific class
 
@@ -150,10 +150,10 @@ cdef class NominalCounter:
     def memory_size(self):
         return self._memory_size()
 
-    def add_instance(self, value_type value, int y, int weight):
+    def add_instance(self, object value, int y, int weight):
         self._add_instance(value, y, weight)
 
-    def get_count(self, value_type value):
+    def get_count(self, object value):
         return self._get_count(value)
 
     def get_values(self):
@@ -171,7 +171,7 @@ cdef class NominalCounter:
     def merge(self, NominalCounter other):
         self._merge(other)
 
-    def get_proba(self, value_type value, int y):
+    def get_proba(self, object value, int y):
         return self._get_proba(value, y)
 
     def get_probas(self):

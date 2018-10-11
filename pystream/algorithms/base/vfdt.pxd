@@ -1,5 +1,5 @@
 cimport numpy as np
-from .statistics.tree_stats cimport TreeStats
+from statistics.tree_stats cimport TreeStats
 
 
 cdef class PossibleSplitC:
@@ -133,7 +133,7 @@ cdef class VFDT:
         Node _root
         int _next_name
         public dict _leaves
-        public object _stats
+        public TreeStats _stats
 
     cdef double _memory_size(self)
 

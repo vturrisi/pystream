@@ -1,15 +1,19 @@
 import pandas as pd
 import sys
 import os
+import pystream.utils.arff_reader
+from pystream.utils.memory_converter import convert_size
+print(convert_size(100000))
+# from pystream.algorithms.base.vfdt import VFDT
 
-from pystream.algorithms.base import VFDT, SVFDT, SVFDT_II
-from pystream.algorithms.ensembles import (OzaBagging, OzaBoosting,
-                                           LeveragingBagging,
-                                           OnlineAccuracyUpdatedEnsemble,
-                                           AdaptiveRandomForests)
-from pystream.utils import read_arff_meta, instance_gen
-from pystream.evaluation import EvaluatePrequential
-
+exit()
+from pystream import (VFDT, SVFDT, SVFDT_II,
+                      OzaBagging, OzaBoosting,
+                      LeveragingBagging,
+                      OnlineAccuracyUpdatedEnsemble,
+                      AdaptiveRandomForests,
+                      read_arff_meta,
+                      instance_gen, EvaluatePrequential)
 
 def run():
     DEBUG = True

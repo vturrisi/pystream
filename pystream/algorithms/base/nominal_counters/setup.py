@@ -9,10 +9,6 @@ def configuration(parent_package="", top_path=None):
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
-    config.add_extension("fused_type",
-                         sources=["fused_type.pyx"],
-                         libraries=libraries,
-                         extra_compile_args=["-O3"])
     config.add_extension("nominal_counter",
                          sources=["nominal_counter.pyx"],
                          include_dirs=[numpy.get_include()],

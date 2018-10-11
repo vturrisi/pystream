@@ -79,7 +79,8 @@ cdef class EvaluatePrequential:
         print('({}) i: {} | current_acc: {:.4f} | mean_acc: {:.4f}'
               ' | time: {:.4f}s | nodes: {} | splits: {}'
               ' | memory: {} bytes'.format(self._name, i, current_acc, acc_mean,
-                                     elapsed_time, n_nodes, splits, size))
+                                           elapsed_time, n_nodes, splits,
+                                           size / 1024))
 
     cpdef _update_log(self, int i, double elapsed_time, double current_acc):
         cdef:

@@ -21,7 +21,7 @@ from statistics.tree_stats cimport TreeStats
 Distribution = Iterable[float]
 
 
-cdef class PossibleSplitC:
+cdef class PossibleSplit:
     def __init__(self, attr, attr_type, value, le_set, gain, distribution):
         self.attr = attr
         self.attr_type = attr_type
@@ -31,7 +31,7 @@ cdef class PossibleSplitC:
         self.distribution = distribution
 
     def __repr__(self):
-        return (f'PossibleSplitC(attr={self.attr}, '
+        return (f'PossibleSplit(attr={self.attr}, '
                 f'attr_type={self.attr_type}, '
                 f'value={self.value}, le_set={self.le_set}, '
                 f'gain={self.gain}, distribution={self.distribution})')
@@ -256,7 +256,7 @@ cdef class Node:
                 entropy -= p * log2(p)
         return entropy
 
-    cdef PossibleSplitC _infogain_continuous(self, double sys_entropy,
+    cdef PossibleSplit _infogain_continuous(self, double sys_entropy,
                                              int attr):
         cdef:
             object estimator
@@ -311,31 +311,33 @@ cdef class Node:
              lowest_entropy, best_distribution) = min(entropies,
                                                       key=lambda ps: ps[1])
             infogain = sys_entropy - lowest_entropy
-            return PossibleSplitC(attr=attr,
-                                  attr_type=self._attr_types[attr],
-                                  value=best_split_value,
-                                  le_set=None,
-                                  gain=infogain,
-                                  distribution=best_distribution)
+            return PossibleSplit(attr=attr,
+                                 attr_type=self._attr_types[attr],
+                                 value=best_split_value,
+                                 le_set=None,
+                                 gain=infogain,
+                                 distribution=best_distribution)
 
-    cdef PossibleSplitC _infogain_nominal(self, double sys_entropy,
+    cdef PossibleSplit _infogain_nominal(self, double sys_entropy,
                                           int attr):
         cdef:
             object estimator
-            dict distribution, total_per_value, probs
+            dict distribution, total_per_value, value_probs
             double total_size, weighted_entropy, weight, entropy, \
                 infogain, p, tot
+            np.ndarray probs
 
         estimator = self._attr_estimators[attr]
         distribution = estimator.get_distribution()
         total_size = estimator.total
         total_per_value = estimator.get_total_per_value()
-        probs = estimator.get_probas()
+        value_probs = estimator.get_probas()
+
         weighted_entropy = 0
-        for v in probs:
-            weight = total_per_value[v]
+        for value, probs in value_probs.items():
+            weight = total_per_value[value]
             entropy = 0
-            for p in probs[v]:
+            for p in probs:
                 if p != 0:
                     entropy += -p * log2(p)
             weighted_entropy += weight * entropy
@@ -343,14 +345,15 @@ cdef class Node:
             weighted_entropy /= total_size
 
         infogain = sys_entropy - weighted_entropy
-        return PossibleSplitC(attr=attr,
-                              attr_type=self._attr_types[attr],
-                              value=None,
-                              le_set=None,
-                              gain=infogain,
-                              distribution=distribution)
+        if infogain != 0:
+            return PossibleSplit(attr=attr,
+                                 attr_type=self._attr_types[attr],
+                                 value=None,
+                                 le_set=None,
+                                 gain=infogain,
+                                 distribution=distribution)
 
-    cdef PossibleSplitC _infogain_nominal_binary(self, double sys_entropy,
+    cdef PossibleSplit _infogain_nominal_binary(self, double sys_entropy,
                                                  int attr):
         cdef:
             object estimator
@@ -411,12 +414,12 @@ cdef class Node:
              lowest_entropy, best_distribution) = min(entropies,
                                                       key=lambda ps: ps[1])
             infogain = sys_entropy - lowest_entropy
-            return PossibleSplitC(attr=attr,
-                                  attr_type=self._attr_types[attr],
-                                  value=None,
-                                  le_set=best_le_set,
-                                  gain=infogain,
-                                  distribution=best_distribution)
+            return PossibleSplit(attr=attr,
+                                 attr_type=self._attr_types[attr],
+                                 value=None,
+                                 le_set=best_le_set,
+                                 gain=infogain,
+                                 distribution=best_distribution)
 
     cdef double gini(self):
         cdef:
@@ -432,12 +435,12 @@ cdef class Node:
                 gini -= p * p
         return gini
 
-    cdef PossibleSplitC _gini_gain_continuous(self, int attr):
+    cdef PossibleSplit _gini_continuous(self, int attr):
         cdef:
             object estimator
             list ginis
             double total_size, split_value, le_size, gt_size, \
-                gini_imp_le, gini_imp_gt, average_gini, gini_gain, \
+                gini_imp_le, gini_imp_gt, average_gini, gini, \
                 best_split_value, n, p
             tuple distribution, best_distribution
 
@@ -473,58 +476,55 @@ cdef class Node:
             (best_split_value,
              lowest_gini, best_distribution) = min(ginis,
                                                    key=lambda ps: ps[1])
-            gini_gain = 1 - lowest_gini
-            return PossibleSplitC(attr=attr,
-                                  attr_type=self._attr_types[attr],
-                                  value=best_split_value,
-                                  le_set=None,
-                                  gain=gini_gain,
-                                  distribution=best_distribution)
+            gini = 1 - lowest_gini
+            return PossibleSplit(attr=attr,
+                                 attr_type=self._attr_types[attr],
+                                 value=best_split_value,
+                                 le_set=None,
+                                 gain=gini,
+                                 distribution=best_distribution)
 
-    cdef PossibleSplitC _gini_gain_nominal(self, int attr):
+    cdef PossibleSplit _gini_nominal(self, int attr):
         cdef:
             object estimator
-            dict distribution, total_per_value, probs
+            dict distribution, total_per_value, value_probs
             double total_size, weighted_gini, weight, gini_imp, \
-                gini_gain, tot, z
+                gini, p, tot
+            np.ndarray probs
 
         estimator = self._attr_estimators[attr]
         distribution = estimator.get_distribution()
         total_size = estimator.total
-        total_per_value, probs = {}, {}
-        for v, dist in distribution.items():
-            tot = 0
-            for z in dist:
-                tot += z
-            total_per_value[v] = tot
-            if tot != 0:
-                probs[v] = dist / tot
-            else:
-                probs[v] = np.zeros(self._n_classes)
+        total_per_value = estimator.get_total_per_value()
+        value_probs = estimator.get_probas()
 
         weighted_gini = 0
-        for v in probs:
-            weight = total_per_value[v] / total_size
+        for value, probs in value_probs.items():
+            weight = total_per_value[value]
             gini_imp = 1
-            for p in probs[v]:
+            for p in probs:
                 if p != 0:
                     gini_imp -= p * p
             weighted_gini += weight * gini_imp
-        gini_gain = 1 - weighted_gini
-        return PossibleSplitC(attr=attr,
-                              attr_type=self._attr_types[attr],
-                              value=None,
-                              le_set=None,
-                              gain=gini_gain,
-                              distribution=distribution)
+        if total_size != 0:
+            weighted_gini /= total_size
 
-    cdef PossibleSplitC _gini_gain_nominal_binary(self, int attr):
+        gini = 1 - weighted_gini
+        if gini != 0:
+            return PossibleSplit(attr=attr,
+                                 attr_type=self._attr_types[attr],
+                                 value=None,
+                                 le_set=None,
+                                 gain=gini,
+                                 distribution=distribution)
+
+    cdef PossibleSplit _gini_nominal_binary(self, int attr):
         cdef:
             object estimator
             dict values_distribution
             list possible_nominal_values
             double total_size, le_size, gt_size, gini_imp_le, \
-                gini_imp_gt, average_gini, gini_gain, n, p
+                gini_imp_gt, average_gini, gini, n, p
             int i
             set le_set, best_le_set
             np.ndarray le, gt, dist, probs_le, probs_gt
@@ -570,17 +570,17 @@ cdef class Node:
             (best_le_set,
              lowest_gini, best_distribution) = min(ginis,
                                                    key=lambda ps: ps[1])
-            gini_gain = 1 - lowest_gini
-            return PossibleSplitC(attr=attr,
-                                  attr_type=self._attr_types[attr],
-                                  value=None,
-                                  le_set=best_le_set,
-                                  gain=gini_gain,
-                                  distribution=best_distribution)
+            gini = 1 - lowest_gini
+            return PossibleSplit(attr=attr,
+                                 attr_type=self._attr_types[attr],
+                                 value=None,
+                                 le_set=best_le_set,
+                                 gain=gini,
+                                 distribution=best_distribution)
 
     def rank_attrs_ig(self):
         cdef:
-            PossibleSplitC possible_split
+            PossibleSplit possible_split
             int attr
             double entropy
             list rank
@@ -596,14 +596,14 @@ cdef class Node:
                 possible_split = self._infogain_nominal_binary(entropy, attr)
             else:
                 possible_split = self._infogain_nominal(entropy, attr)
-            if possible_split:
+            if possible_split is not None:
                 rank.append(possible_split)
         rank.sort(key=lambda ps: ps.gain, reverse=True)
         return rank
 
     def rank_attrs_gini(self):
         cdef:
-            PossibleSplitC possible_split
+            PossibleSplit possible_split
             int attr
             list rank
 
@@ -612,19 +612,19 @@ cdef class Node:
                                       attr[0] not in self._dropped_attrs,
                                       enumerate(self._attr_types)):
             if attr_type is float:
-                possible_split = self._gini_gain_continuous(attr)
+                possible_split = self._gini_continuous(attr)
             elif self._only_binary_splits:
-                possible_split = self._gini_gain_nominal_binary(attr)
+                possible_split = self._gini_nominal_binary(attr)
             else:
-                possible_split = self._gini_gain_nominal(attr)
-            if possible_split:
+                possible_split = self._gini_nominal(attr)
+            if possible_split is not None:
                 rank.append(possible_split)
         rank.sort(key=lambda ps: ps.gain, reverse=True)
         return rank
 
     cdef void _drop_poor_attrs_func(self, list rank, double hb):
         cdef:
-            PossibleSplitC best, ps
+            PossibleSplit best, ps
             int i
             set removed_attrs
 
@@ -636,7 +636,7 @@ cdef class Node:
                 self._dropped_attrs |= removed_attrs
                 break
 
-    cdef int split(self, PossibleSplitC possible_split):
+    cdef int split(self, PossibleSplit possible_split):
         attr, value, le_set, gain, dist = (possible_split.attr,
                                            possible_split.value,
                                            possible_split.le_set,
@@ -1168,7 +1168,7 @@ cdef class VFDT:
 
     cdef bint _can_split_vfdt(self, list rank, double hb):
         cdef:
-            PossibleSplitC best, sec_best
+            PossibleSplit best, sec_best
             double best_gain, secbest_gain
 
         if len(rank) == 1:
@@ -1178,7 +1178,7 @@ cdef class VFDT:
         secbest_gain = sec_best.gain
         return best_gain - secbest_gain > hb or hb < self._tiebreaker
 
-    cdef void _split_leaf(self, PossibleSplitC split, Node leaf):
+    cdef void _split_leaf(self, PossibleSplit split, Node leaf):
         cdef:
             int n_child
             tuple names
@@ -1206,7 +1206,7 @@ cdef class VFDT:
             Node leaf
             double gp, current_n, last_n, hb
             list rank
-            PossibleSplitC split
+            PossibleSplit split
 
         if weight == 0:
             return

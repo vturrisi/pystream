@@ -2,7 +2,7 @@ cimport numpy as np
 from statistics.tree_stats cimport TreeStats
 
 
-cdef class PossibleSplitC:
+cdef class PossibleSplit:
     cdef:
         readonly int attr
         readonly object attr_type, value
@@ -57,25 +57,24 @@ cdef class Node:
 
     cdef double entropy(self)
 
-    cdef PossibleSplitC _infogain_continuous(self, double sys_entropy,
-                                             int attr)
+    cdef PossibleSplit _infogain_continuous(self, double sys_entropy, int attr)
 
-    cdef PossibleSplitC _infogain_nominal(self, double sys_entropy, int attr)
+    cdef PossibleSplit _infogain_nominal(self, double sys_entropy, int attr)
 
-    cdef PossibleSplitC _infogain_nominal_binary(self, double sys_entropy,
-                                                 int attr)
+    cdef PossibleSplit _infogain_nominal_binary(self, double sys_entropy,
+                                                int attr)
 
     cdef double gini(self)
 
-    cdef PossibleSplitC _gini_gain_continuous(self, int attr)
+    cdef PossibleSplit _gini_continuous(self, int attr)
 
-    cdef PossibleSplitC _gini_gain_nominal(self, int attr)
+    cdef PossibleSplit _gini_nominal(self, int attr)
 
-    cdef PossibleSplitC _gini_gain_nominal_binary(self, int attr)
+    cdef PossibleSplit _gini_nominal_binary(self, int attr)
 
     cdef void _drop_poor_attrs_func(self, list rank, double hb)
 
-    cdef int split(self, PossibleSplitC possible_split)
+    cdef int split(self, PossibleSplit possible_split)
 
     cdef int _split_nominal(self, int attr, double gain,
                              dict distribution)
@@ -149,7 +148,7 @@ cdef class VFDT:
 
     cdef bint _can_split_vfdt(self, list rank, double hb)
 
-    cdef void _split_leaf(self, PossibleSplitC split, Node leaf)
+    cdef void _split_leaf(self, PossibleSplit split, Node leaf)
 
     cdef void _reset_leaf(self, Node leaf)
 

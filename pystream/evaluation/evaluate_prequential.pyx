@@ -1,5 +1,6 @@
 # cython: boundscheck=False
 
+
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -20,6 +21,8 @@ cdef class EvaluatePrequential:
     cdef int last_pos
     cdef bint FIRST_CYCLE
     cdef object _memory_log, _log
+    cdef int _elements_seen
+    cdef double _current_acc
 
     MAXDIGITS = 4
     MAXDIGITS_TIME = 1
@@ -109,21 +112,51 @@ cdef class EvaluatePrequential:
             f.write('linha: real | coluna: predito\n')
             f.write(np.array_str(self.stats['cm']))
 
+    # cpdef _compute_le_acc(self, y, yhat, window_size):
+    #     cdef:
+    #         double current_acc
+    #
+    #     self.last_scores[self.last_pos] = 1 if yhat == y else 0
+    #     self.last_pos = (self.last_pos + 1) % window_size
+    #
+    #     # accuracy on last elements
+    #     if self.FIRST_CYCLE and self.last_pos == 0:
+    #         self.FIRST_CYCLE = False
+    #     if self.FIRST_CYCLE:
+    #         current_acc = np.mean(self.last_scores[:self.last_pos])
+    #     else:
+    #         current_acc = np.mean(self.last_scores)
+    #     return current_acc
+
     cpdef _compute_le_acc(self, y, yhat, window_size):
         cdef:
-            double current_acc
+            double last_mean
+            int new_v, old_v
 
-        self.last_scores[self.last_pos] = 1 if yhat == y else 0
+        new_v = 1 if yhat == y else 0
+        old_v = self.last_scores[self.last_pos]
+
+        self.last_scores[self.last_pos] = new_v
         self.last_pos = (self.last_pos + 1) % window_size
 
         # accuracy on last elements
         if self.FIRST_CYCLE and self.last_pos == 0:
             self.FIRST_CYCLE = False
+
         if self.FIRST_CYCLE:
-            current_acc = np.mean(self.last_scores[:self.last_pos])
+            self._elements_seen += 1
+            last_mean = self._current_acc
+            self._current_acc += (new_v - last_mean) / self._elements_seen
+
         else:
-            current_acc = np.mean(self.last_scores)
-        return current_acc
+            # remove the accuracy value kicked from list
+            self._elements_seen -= 1
+            last_mean = self._current_acc
+            self._current_acc -= (old_v - last_mean) / self._elements_seen
+
+            self._elements_seen += 1
+            last_mean = self._current_acc
+            self._current_acc += (new_v - last_mean) / self._elements_seen
 
     cdef _update_pred_stats(self, int y, int yhat):
         cdef:
@@ -163,6 +196,8 @@ cdef class EvaluatePrequential:
             int y, row_i, yhat, weight
             double start_time, elapsed_time, current_acc
 
+        self._elements_seen = 0
+        self._current_acc = 0
         self.last_scores = np.zeros(window_size, dtype=np.float64)
         self.last_pos = 0
         self.FIRST_CYCLE = True
@@ -178,21 +213,21 @@ cdef class EvaluatePrequential:
         for row_i, (X, y) in stream:
             yhat = self._algorithm.predict(X)
             self._update_pred_stats(y, yhat)
-            current_acc = self._compute_le_acc(y, yhat, window_size)
+            self._compute_le_acc(y, yhat, window_size)
             elapsed_time = time.time() - start_time
 
-            if row_i % frequency == 0:
+            if row_i % frequency == 0 and (debug or log_file):
                 if debug:
-                    self._print_debug(row_i, elapsed_time, current_acc)
+                    self._print_debug(row_i, elapsed_time, self._current_acc)
                 if log_file:
-                    self._update_log(row_i, elapsed_time, current_acc)
+                    self._update_log(row_i, elapsed_time, self._current_acc)
 
             self._algorithm.train(X, y, weight)
         elapsed_time = time.time() - start_time
         stats = self.stats
         stats['train_time'] = elapsed_time
         if log_file:
-            self._update_log(row_i, elapsed_time, current_acc)
+            self._update_log(row_i, elapsed_time, self._current_acc)
             self._write_log(log_file, window_size)
             self._write_cm_log(log_file)
 
@@ -204,11 +239,11 @@ cdef class EvaluatePrequential:
             int y, row_i, yhat, weight
             double start_time, elapsed_time, current_acc
 
+        self._current_acc = -1
         self.last_scores = np.zeros(window_size, dtype=np.float64)
         self.last_pos = 0
         self.FIRST_CYCLE = True
 
-        current_acc = -1
         # learn first example
         row_i, (X, y) = next(stream)
 
@@ -225,6 +260,6 @@ cdef class EvaluatePrequential:
         stats = self.stats
         stats['train_time'] = elapsed_time
         if log_file:
-            self._update_log(row_i, elapsed_time, current_acc)
+            self._update_log(row_i, elapsed_time, self._current_acc)
             self._write_log(log_file, window_size)
             self._write_cm_log(log_file)

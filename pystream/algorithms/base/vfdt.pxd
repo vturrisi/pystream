@@ -28,8 +28,8 @@ cdef class Node:
         object _parent
         public object _exhausted_attrs
         public object _dropped_attrs
-        public object _start_dist
-        public object _start_n
+        public object _dist_from_split
+        public object _n_from_split
         object _split_attr
         object _split_value
         object _split_gain

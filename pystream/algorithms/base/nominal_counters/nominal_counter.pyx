@@ -126,17 +126,18 @@ cdef class NominalCounter:
 
     cdef dict _get_probas(self):
         cdef:
+            object value
             double n, tot
             np.ndarray dist
             dict probas
 
         probs = {}
-        for v, dist in self._counts.items():
-            tot = self._totals[v]
+        for value, dist in self._counts.items():
+            tot = self._totals[value]
             if tot != 0:
-                probs[v] = dist / tot
+                probs[value] = dist / tot
             else:
-                probs[v] = np.zeros(self._n_classes)
+                probs[value] = np.zeros(self._n_classes)
         return probs
 
     cdef tuple _possible_values(self):

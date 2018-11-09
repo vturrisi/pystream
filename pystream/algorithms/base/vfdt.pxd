@@ -14,8 +14,8 @@ cdef class PossibleSplit:
 cdef class Node:
     cdef:
         object __weakref__
-        public bint active, _is_leaf
-        bint _only_binary_splits, _estimators_empty
+        public bint active, _is_leaf, _estimators_empty
+        bint _only_binary_splits
         public object _name
         int _n_attrs, _n_classes
         public double _n,  _last_n

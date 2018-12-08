@@ -102,10 +102,12 @@ cdef class NominalCounter:
             other: Other NominalCounter to merge with
         """
 
-        cdef int v
+        cdef object v
+
         self.total = other.total
         for v in self._counts:
             self._counts[v] += other._counts[v]
+            self._totals[v] += other._totals[v]
 
     cdef double _get_proba(self, object value, int y):
         """

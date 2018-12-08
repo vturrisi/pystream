@@ -1,41 +1,31 @@
-from setuptools import setup, find_packages
-from os.path import basename, splitext
-from glob import glob
-from distutils.extension import Extension
-from Cython.Build import cythonize
-import numpy
+from numpy.distutils.core import setup
 
 
-extensions = [
-    Extension("*", ['pystream/algorithms/base/*.pyx'],
-              include_dirs=[numpy.get_include(), '.']),
+def configuration(parent_package='',top_path=None):
+    from Cython.Build import cythonize
+    from numpy.distutils.misc_util import Configuration
 
-    Extension("*", ['pystream/algorithms/base/*/*.pyx'],
-              include_dirs=[numpy.get_include(), '.']),
 
-    Extension("*", ['pystream/algorithms/change_detectors/*.pyx'],
-              include_dirs=[numpy.get_include(), '.']),
+    config = Configuration(None, parent_package, top_path)
 
-    Extension("*", ['pystream/algorithms/ensembles/*.pyx'],
-              include_dirs=[numpy.get_include(), '.']),
+    config.set_options(ignore_setup_xxx_py=True,
+                       assume_default_configuration=True,
+                       delegate_options_to_subpackages=True,
+                       quiet=True)
 
-    Extension("*", ['pystream/evaluation/*.pyx'],
-              include_dirs=[numpy.get_include(), '.']),
+    config.add_subpackage('pystream')
 
-    Extension("*", ['pystream/utils/*.pyx'],
-              include_dirs=[numpy.get_include(), '.']),
-]
+    config.ext_modules = cythonize(config.ext_modules, nthreads=4)
+    return config
 
-ext_modules = cythonize(extensions)
 
 setup(name='pystream',
-      version='1.0',
+      version='1.1',
       description='Pystream',
       url='http://github.com/vturrisi/pystream',
       author='Victor Turrisi',
       license='MIT',
-      packages=find_packages(exclude=('tests', 'evaluate')),
-      ext_modules=ext_modules,
+      **configuration().todict(),
       setup_requires=['cython>=0.x'],
       include_package_data=True,
       zip_safe=False)

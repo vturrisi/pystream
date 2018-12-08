@@ -6,7 +6,7 @@ import numpy as np
 import array
 from sys import getsizeof
 from typing import Generator
-from libc.math cimport sqrt, pi, exp
+from libc.math cimport sqrt, pi, exp, pow
 cimport cython
 
 
@@ -182,12 +182,12 @@ cdef class ClassGaussianEstimator:
         Merges two different GaussianNumericEstimators
         """
 
-        new_estimators = [est.merge(est_other) for est, est_other
-                          in zip(self._estimators, other._estimators)]
-        self._estimators = new_estimators
+        for est, other_est in zip(self._estimators, other._estimators):
+            est.merge(other_est)
+
         self._max_values = np.maximum(self._max_values, other._max_values)
         self._min_values = np.minimum(self._min_values, other._min_values)
-        self.total += other._total
+        self.total += other.total
 
     def memory_size(self):
         return self._memory_size()
@@ -269,29 +269,39 @@ cdef class GaussianEstimator:
             last_mean = self._mean
             self._mean += weight * (value - last_mean) / self._n
             self._variance_sum += (weight * (value - last_mean) *
-                                  (value - self._mean))
+                                   (value - self._mean))
             self._variance = (self._variance_sum / (self._n - 1)
-                             if self._n > 1 else 0)
+                              if self._n > 1 else 0)
             self._stdev = sqrt(self._variance)
         else:
             self._mean = value
             self._n = weight
 
-    cdef merge(self, GaussianEstimator other):
+    cpdef merge(self, GaussianEstimator other):
         """
         Merges two different GaussianNumericEstimators
         """
 
         cdef double delta
 
-        self._n += other._n
-        if self._n != 0:
-            self._mean = (self._mean * self._n +
-                          other._mean * other._n) / self._n
-            delta = self._mean - other._mean
-            self._variance_sum = (self._variance_sum +
-                                  other._variance_sum + delta ** 2 *
-                                  (self._n * other._n) / self._n)
+        if self._n > 0 and other._n > 0:
+            old_mean = self._mean
+            new_n = self._n + other._n
+
+            self._mean = ((self._mean * (self._n / new_n)) +
+                          (other._mean * (other._n / new_n)))
+            self._variance_sum += (other._variance_sum +
+                                   (self._n * other._n / new_n) *
+                                    pow(other._mean - old_mean, 2))
+            self._n = new_n
+
+            self._variance = (self._variance_sum / (self._n - 1)
+                              if self._n > 1 else 0)
+            self._stdev = sqrt(self._variance)
+        elif other._n > 0:
+            self._n = other._n
+            self._mean = other._mean
+            self._variance_sum = other._variance_sum
             self._variance = (self._variance_sum / (self._n - 1)
                               if self._n > 1 else 0)
             self._stdev = sqrt(self._variance)
@@ -318,7 +328,7 @@ cdef class GaussianEstimator:
         if self._stdev > 0:
             v = (split_value - self._mean) / self._stdev
             less_n = self.normal_probability(v) * self._n - equal_n
-        elif split_value < self.mean:
+        elif split_value < self._mean:
             less_n = self._n - equal_n
         else:
             less_n = 0

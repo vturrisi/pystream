@@ -3,7 +3,6 @@
 import numpy as np
 cimport numpy as np
 from libc.math cimport INFINITY
-
 from sys import getsizeof
 
 

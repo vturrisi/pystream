@@ -1,6 +1,5 @@
 # cython: boundscheck=False
 
-
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -149,7 +148,6 @@ cdef class EvaluatePrequential:
             self._current_acc += (new_v - last_mean) / self._elements_seen
 
         else:
-            # remove the accuracy value kicked from list
             self._elements_seen -= 1
             last_mean = self._current_acc
             self._current_acc -= (old_v - last_mean) / self._elements_seen

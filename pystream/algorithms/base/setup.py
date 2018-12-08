@@ -1,35 +1,49 @@
-import os
+def configuration(parent_package='',top_path=None):
+    import os
+    from os.path import join
 
-import numpy
-from numpy.distutils.misc_util import Configuration
-from Cython.Distutils import build_ext
+    import numpy
+    from numpy.distutils.misc_util import Configuration
 
 
-def configuration(parent_package="", top_path=None):
-    config = Configuration("base", parent_package, top_path)
-    libraries = []
+    libs = []
     if os.name == 'posix':
-        libraries.append('m')
-    config.add_extension("vfdt",
-                         sources=["vfdt.pyx"],
-                         include_dirs=[numpy.get_include(), '.'],
-                         libraries=libraries,
-                         extra_compile_args=["-O3"])
-    config.add_extension("svfdt",
-                         sources=["svfdt.pyx"],
-                         include_dirs=[numpy.get_include(), '.'],
-                         libraries=libraries,
-                         extra_compile_args=["-O3"])
-    config.add_extension("svfdt_ii",
-                         sources=["svfdt_ii.pyx"],
-                         include_dirs=[numpy.get_include(), '.'],
-                         libraries=libraries,
-                         extra_compile_args=["-O3"])
+        libs.append('m')
+
+    config = Configuration('base', parent_package, top_path)
+
+    config.add_subpackage('nominal_counters')
+    config.add_subpackage('numeric_estimators')
+    config.add_subpackage('statistics')
+
+    dirs = [numpy.get_include(), '.']
+
+    dependencies = ['nominal_counters', 'numeric_estimators']
+    depends = [join(d, '*.pyx') for d in dependencies] +\
+        [join(d, '*.pxd') for d in dependencies]
+
+    config.add_extension(name='vfdt',
+                         sources=['vfdt.pyx'],
+                         libraries=libs,
+                         include_dirs=dirs,
+                         depends=depends)
+
+    config.add_extension(name='svfdt',
+                         sources=['svfdt.pyx'],
+                         libraries=libs,
+                         include_dirs=dirs,
+                         depends=depends + ['vfdt.pyx'])
+
+    config.add_extension(name='svfdt_ii',
+                         sources=['svfdt_ii.pyx'],
+                         libraries=libs,
+                         include_dirs=dirs,
+                         depends=depends + ['vfdt.pyx',
+                                            'svfdt.pyx'])
+
+    config.make_config_py() # installs __config__.py
     return config
 
-if __name__ == "__main__":
-    from numpy.distutils.core import setup
-    setup(**configuration().todict(),
-          cmdclass={'build_ext': build_ext},
-          script_args=['build_ext'],
-          options={'build_ext': {'inplace': True, 'force': True}})
+
+if __name__ == '__main__':
+    print('This is the wrong setup.py file to run')

@@ -27,5 +27,6 @@ setup(name='pystream',
       license='MIT',
       **configuration().todict(),
       setup_requires=['cython>=0.x'],
+      install_requires=['numpy>=1.14.1', 'pandas>=0.20.0', 'cython>=0.x'],
       include_package_data=True,
       zip_safe=False)

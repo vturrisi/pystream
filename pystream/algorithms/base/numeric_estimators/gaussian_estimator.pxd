@@ -38,7 +38,7 @@ cdef class GaussianEstimator:
 
     cdef add_value(self, double value, int weight)
 
-    cdef merge(self, GaussianEstimator other)
+    cpdef merge(self, GaussianEstimator other)
 
     cdef double proba_density(self, double value)
 

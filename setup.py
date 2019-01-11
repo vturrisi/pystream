@@ -28,6 +28,8 @@ extensions = [
 
 ext_modules = cythonize(extensions)
 
+print(find_packages(exclude=('tests', 'evaluate')))
+
 setup(name='pystream',
       version='1.0',
       description='Pystream',

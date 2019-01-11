@@ -82,16 +82,16 @@ cdef class Node:
         # if this node in inheriting some
         # class distribution from its parent
         if distribution is None:
-            self._start_dist = None
+            self._dist_from_split = None
             self._dist = np.zeros(n_classes)
-            self._start_n = 0
+            self._n_from_split = 0
             self._n = 0
             self._last_n = 0
         else:
-            self._start_dist = np.copy(distribution)
+            self._dist_from_split = np.copy(distribution)
             self._dist = np.copy(distribution)
-            self._start_n = distribution.sum()
-            self._n = self._start_n
+            self._n_from_split = distribution.sum()
+            self._n = self._n_from_split
             self._last_n = self._n
 
         # initially this node is a leaf
@@ -158,8 +158,8 @@ cdef class Node:
         # memory after calling clean_after_split
         try:
             size += getsizeof(self._dist)
-            size += getsizeof(self._start_n)
-            size += getsizeof(self._start_dist)
+            size += getsizeof(self._n_from_split)
+            size += getsizeof(self._dist_from_split)
             size += getsizeof(self._attr_estimators)
             size += getsizeof(self._dropped_attrs)
             size += getsizeof(self._exhausted_attrs)
@@ -187,10 +187,10 @@ cdef class Node:
         instances coming from its parent's split
         '''
 
-        if self._start_dist is None:
+        if self._dist_from_split is None:
             return self._dist
         else:
-            return self._dist - self._start_dist
+            return self._dist - self._dist_from_split
 
     cdef void _update_attr_estimators(self, np.ndarray X, int y, int weight):
         '''
@@ -233,8 +233,7 @@ cdef class Node:
         self._update_attr_estimators(X, y, weight)
 
         # add y to node count
-        # self._dist[y] += weight
-        self._dist[y] = self._dist[y] + weight
+        self._dist[y] += weight
 
         # increase the number of elements seen
         self._n += weight
@@ -245,10 +244,10 @@ cdef class Node:
     cdef double entropy(self):
         cdef:
             np.ndarray clean_distribution, probs
-            double tot, p, entropy
+            double tot, p, entropy, v
 
         clean_distribution = self.clean_distribution
-        tot = self._n - self._start_n
+        tot = self._n - self._n_from_split
         entropy = 0
         for v in clean_distribution:
             if v != 0:
@@ -257,7 +256,7 @@ cdef class Node:
         return entropy
 
     cdef PossibleSplit _infogain_continuous(self, double sys_entropy,
-                                             int attr):
+                                            int attr):
         cdef:
             object estimator
             double total_size, split_value, le_size, gt_size, \
@@ -283,14 +282,14 @@ cdef class Node:
 
             if le_size > 0:
                 for n in le:
-                    p = n / le_size
-                    if p != 0:
+                    if n != 0:
+                        p = n / le_size
                         entropy_left += -p * log2(p)
 
             if gt_size > 0:
                 for n in gt:
-                    p = n / gt_size
-                    if p != 0:
+                    if n != 0:
+                        p = n / gt_size
                         entropy_right += -p * log2(p)
 
             # probs_le = np.fromiter([n / le_size for n in le if n != 0],
@@ -354,7 +353,7 @@ cdef class Node:
                                  distribution=distribution)
 
     cdef PossibleSplit _infogain_nominal_binary(self, double sys_entropy,
-                                                 int attr):
+                                                int attr):
         cdef:
             object estimator
             dict values_distribution
@@ -390,14 +389,14 @@ cdef class Node:
             entropy_left, entropy_right = 0, 0
             if le_size > 0:
                 for n in le:
-                    p = n / le_size
-                    if p != 0:
+                    if n != 0:
+                        p = n / le_size
                         entropy_left += -p * log2(p)
 
             if gt_size > 0:
                 for n in gt:
-                    p = n / gt_size
-                    if p != 0:
+                    if n != 0:
+                        p = n / gt_size
                         entropy_right += -p * log2(p)
             # probs_le = np.fromiter([n / le_size for n in le if n != 0],
             #                        dtype=np.float64)
@@ -424,15 +423,14 @@ cdef class Node:
     cdef double gini(self):
         cdef:
             np.ndarray clean_distribution, probs
-            double tot, p, gini
+            double tot, p, gini, v
 
         clean_distribution = self.clean_distribution
-        tot = self._n - self._start_n
+        tot = self._n - self._n_from_split
         gini = 1
         for v in clean_distribution:
-            if v != 0:
-                p = v / tot
-                gini -= p * p
+            p = v / tot
+            gini -= p * p
         return gini
 
     cdef PossibleSplit _gini_continuous(self, int attr):
@@ -455,19 +453,19 @@ cdef class Node:
             for p in gt:
                 gt_size += p
             distribution = (le, gt)
+
             gini_imp_le = 1
             if le_size > 0:
                 for n in le:
                     p = n / le_size
-                    if p != 0:
-                        gini_imp_le -= p * p
+                    gini_imp_le -= p * p
 
             gini_imp_gt = 1
             if gt_size > 0:
                 for n in gt:
                     p = n / gt_size
-                    if p != 0:
-                        gini_imp_gt -= p * p
+                    gini_imp_gt -= p * p
+
             average_gini = ((gini_imp_le * le_size +
                             gini_imp_gt * gt_size) / total_size)
             ginis.append((split_value, average_gini, distribution))
@@ -776,8 +774,8 @@ cdef class Node:
         PyObject_DelAttr(self, '_dropped_attrs')
         PyObject_DelAttr(self, '_exhausted_attrs')
         PyObject_DelAttr(self, '_attr_estimators')
-        PyObject_DelAttr(self, '_start_dist')
-        PyObject_DelAttr(self, '_start_n')
+        PyObject_DelAttr(self, '_dist_from_split')
+        PyObject_DelAttr(self, '_n_from_split')
         PyObject_DelAttr(self, '_dist')
 
     cdef np.ndarray mc_predict_proba(self):
@@ -863,7 +861,7 @@ cdef class Node:
         if not self._estimators_empty:
             for y in range(self._n_classes):
                 for x, estimator in zip(X, self._attr_estimators):
-                    probs[y] *= log(estimator.get_proba(x, y))
+                    probs[y] += log(estimator.get_proba(x, y))
 
             # scale prob output
             tot = 0
@@ -905,11 +903,10 @@ cdef class Node:
             double last_acc
             int n
 
-        last_acc = self._stats['acc']
         self._stats['elements_seen'] += weight
         n = self._stats['elements_seen']
+        last_acc = self._stats['acc']
         self._stats['acc'] += (success - last_acc) / n
-        # self._stats['acc'] = (acc * n + success * weight) / (n + weight)
         self._stats['elements_seen'] += weight
 
     cdef tuple _mc_update_accs(self, np.ndarray X, int y, int weight):

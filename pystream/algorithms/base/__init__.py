@@ -7,5 +7,6 @@ from .statistics import SimpleStats, NormalDistValueStats, TreeStats
 
 
 __all__ = ['VFDT', 'SVFDT', 'SVFDT_II',
+           'OLBoostVFDT', 'OLBoostSVFDT', 'OLBoostSVFDT_II',
            'NominalCounter', 'ClassGaussianEstimator',
            'SimpleStats', 'NormalDistValueStats', 'TreeStats']

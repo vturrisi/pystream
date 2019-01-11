@@ -19,8 +19,6 @@ def configuration(parent_package='',top_path=None):
     return config
 
 
-print(find_packages(exclude=('tests', 'evaluate')))
-
 setup(name='pystream',
       version='1.1',
       description='Pystream',

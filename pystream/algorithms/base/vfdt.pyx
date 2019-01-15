@@ -427,10 +427,13 @@ cdef class Node:
 
         clean_distribution = self.clean_distribution
         tot = self._n - self._n_from_split
+        if tot == 0:
+            return 0
         gini = 1
         for v in clean_distribution:
-            p = v / tot
-            gini -= p * p
+            if v != 0:
+                p = v / tot
+                gini -= p * p
         return gini
 
     cdef PossibleSplit _gini_continuous(self, int attr):

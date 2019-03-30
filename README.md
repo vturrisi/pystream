@@ -18,7 +18,8 @@ An MOA-based implementation for data stream classification in Python/Cython
 
 ## To run:
   - pip install -r requirements.txt
-  - pip install . --user
+  - python setup.py build_ext --inplace (builds Cython extensions and creates .so files)
+  - python setup.py install --user 
   - Follow test.py file
 
 ## TODO:

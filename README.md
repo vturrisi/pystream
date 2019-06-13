@@ -7,6 +7,7 @@ An MOA-based implementation for data stream classification in Python/Cython
   __Base learners__:
   - Very Fast Decision Tree (https://homes.cs.washington.edu/~pedrod/papers/kdd00.pdf)
   - Strict Very Fast Decision Tree (https://www.sciencedirect.com/science/article/pii/S0167865518305580)
+  - OLBoost (to be upload on arxiv)
 
   __Ensembles__:
   - OzaBag/OzaBoost (https://ti.arc.nasa.gov/m/profile/oza/files/ozru01a.pdf)
@@ -17,9 +18,9 @@ An MOA-based implementation for data stream classification in Python/Cython
   __Util and evaluation classes__.
 
 ## To run:
-  - pip install -r requirements.txt
+  - pip install -r requirements.txt --user
   - python setup.py build_ext --inplace (builds Cython extensions and creates .so files)
-  - python setup.py install --user 
+  - python setup.py install --user
   - Follow test.py file
 
 ## TODO:

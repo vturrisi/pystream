@@ -1,8 +1,9 @@
-from setuptools import setup, Extension, find_packages
-from Cython.Build import cythonize
+import os
+
 import Cython
 import numpy as np
-import os
+from Cython.Build import cythonize
+from setuptools import Extension, find_packages, setup
 
 libs = []
 if os.name == 'posix':
@@ -35,6 +36,28 @@ extensions.append(E)
 
 E = Extension(name='pystream.algorithms.base.svfdt_ii',
               sources=['pystream/algorithms/base/svfdt_ii.pyx'],
+              libraries=libs,
+              include_dirs=dirs,
+              depends=dependencies + ['pystream/algorithms/base/vfdt.pxd',
+                                      'pystream/algorithms/base/svfdt.pxd'])
+extensions.append(E)
+
+E = Extension(name='pystream.algorithms.base.olboost_vfdt',
+              sources=['pystream/algorithms/base/olboost_vfdt.pyx'],
+              libraries=libs,
+              include_dirs=dirs,
+              depends=dependencies + ['pystream/algorithms/base/vfdt.pxd'])
+extensions.append(E)
+
+E = Extension(name='pystream.algorithms.base.olboost_svfdt',
+              sources=['pystream/algorithms/base/olboost_svfdt.pyx'],
+              libraries=libs,
+              include_dirs=dirs,
+              depends=dependencies + ['pystream/algorithms/base/vfdt.pxd'])
+extensions.append(E)
+
+E = Extension(name='pystream.algorithms.base.olboost_svfdt_ii',
+              sources=['pystream/algorithms/base/olboost_svfdt_ii.pyx'],
               libraries=libs,
               include_dirs=dirs,
               depends=dependencies + ['pystream/algorithms/base/vfdt.pxd',
